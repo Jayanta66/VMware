@@ -86,3 +86,97 @@ If this video helps you, don’t forget to Like 👍, Subscribe 🔔, and Commen
 sudo apt install -y linux-headers-$(uname -r)
 
 I
+
+
+
+
+
+
+
+
+
+
+
+#####################################
+
+Products
+VMware Desktop Hypervisor
+VMware Workstation Player 12.x
+Issue/Introduction
+Steps to sign VMware drivers on Linux host with secure boot enabled, so that VMware Workstation can run VMs successfully.
+
+Symptoms:
+
+Powering on a virtual machine on Linux hosts that boots from UEFI with secure boot enabled fails
+You see the error:
+Cannot open /dev/vmmon: No such file or directory. Please make sure that the kernel module `vmmon' is loaded
+Environment
+VMware Workstation Pro 12.x (Linux)
+
+Cause
+On Linux host with secure mode enabled, it is not allowed to load any unsigned drivers. Due to this, VMware drivers, such as vmmon and vmnet, are not able to be loaded which prevents virtual machine to power on.
+
+Resolution
+Notes:
+
+Workstation does not ship vmmon.ko and vmnet.ko in the bundle currently. The two modules are built during the installation or the first launch of workstation.
+During the installation if the host provides the proper kernel headers and gcc, these two modules will be built silently. The progress is logged into /tmp/vmware-root/vmware-PID.log.
+When workstation is first launched, a dialog will pop up to ask you for the usable kernel headers and/or gcc. These two modules will be built with window showing the progress and log printed on terminal.
+Ensure to have the Host OS updated with the latest patches.
+To correct the issue with secure boot enabled:
+Generate a key pair using the openssl to sign vmmon and vmnet modules:
+
+$openssl req -new -x509 -newkey rsa:2048 -keyout MOK.priv -outform DER -out MOK.der -nodes -days 36500 -subj "/CN=VMware/"
+
+Replace MOK with the name of the file you want for the key.
+ 
+Sign the modules using the generated key by running these commands:
+
+$sudo /usr/src/linux-headers-`uname -r`/scripts/sign-file sha256 ./MOK.priv ./MOK.der $(modinfo -n vmmon)
+
+$sudo /usr/src/linux-headers-`uname -r`/scripts/sign-file sha256 ./MOK.priv ./MOK.der $(modinfo -n vmnet)
+Import the public key to the system's MOK list by running this command:
+
+$mokutil --import MOK.der
+Confirm a password for this MOK enrollment request.
+Reboot your machine. Follow the instructions to complete the enrollment from the UEFI consol.
+Note: The preceding commands are verified to work on Ubuntu 16.04 hosts. The general steps are applicable to all Linux distributions, but specific Linux distributions might differ in commands.
+Additional Information
+With VMware you will have two modules with this problem, vmmon and vmnet. You must sign them both:
+
+user@localhost:$ sudo /usr/src/kernels/$(uname -r)/scripts/sign-file sha256 ./MOK.priv ./MOK.der $(modinfo -n vmmon)
+user@localhost:$ sudo /usr/src/kernels/$(uname -r)/scripts/sign-file sha256 ./MOK.priv ./MOK.der $(modinfo -n vmnet)
+
+
+
+
+sudo apt update && sudo apt install build-essential linux-headers-$(uname -r) virtualbox-dkms
+
+
+
+############################################
+
+There is a lot of posts about the missing vmmon, but this one always bites me after I update ubuntu kernel, and then I forget every time :)
+
+From: https://kb.vmware.com/s/article/1002411
+
+vmware-modconfig --console --install-all
+
+EDIT- I also have to do the following now on Ubuntu:
+
+"First line only needs to be run once:
+
+openssl req -new -x509 -newkey rsa:2048 -keyout MOK.priv -outform DER -out MOK.der -nodes -days 36500 -subj "/CN=VMware/"
+sudo mokutil --import MOK.der
+Then reboot and if memory serves you will asked to confirm a change to your boot loader. Essentially you are adding this self created cert to the boot loader.
+
+sudo /usr/src/linux-headers-`uname -r`/scripts/sign-file sha256 ./MOK.priv ./MOK.der $(modinfo -n vmmon)
+
+sudo /usr/src/linux-headers-`uname -r`/scripts/sign-file sha256 ./MOK.priv ./MOK.der $(modinfo -n vmnet)
+
+sudo modprobe -v vmmon
+
+sudo modprobe -v vmnet
+
+sudo vmware-networks --start
+You need to have the very latest version of workstation/player/viewer if you upgrade your kernel Workstation builds modules, and often the build process breaks if there are kernel changes. So if you are having problems first make sure you have the latest version of workstation https://www.vmware.com/products/workstation-pro/workstation-pro-evaluation.html
