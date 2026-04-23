@@ -193,3 +193,34 @@ You need to have the very latest version of workstation/player/viewer if you upg
 sudo vmware-installer --uninstall-product vmware-workstation
 
 sudo dkms install --no-depmod -m vmware-workstation -v 17.6.4
+
+
+
+I'm trying to sign some kernel modules (for virtualbox) as explained here.
+
+As explained there, I create the new keys:
+
+openssl req -new -x509 -newkey rsa:2048 -keyout MOK.priv -outform DER -out MOK.der -nodes -days 36500 -subj "/CN=Descriptive name/"
+I sign all the modules:
+
+sudo /usr/src/linux-headers-$(uname -r)/scripts/sign-file sha256 ./MOK.priv ./MOK.der $(modinfo -n vboxdrv)
+sudo /usr/src/linux-headers-$(uname -r)/scripts/sign-file sha256 ./MOK.priv ./MOK.der $(modinfo -n vboxnetadp)
+sudo /usr/src/linux-headers-$(uname -r)/scripts/sign-file sha256 ./MOK.priv ./MOK.der $(modinfo -n vboxnetflt)
+sudo /usr/src/linux-headers-$(uname -r)/scripts/sign-file sha256 ./MOK.priv ./MOK.der $(modinfo -n vboxpci)
+But when it comes to importing the keys, that fails
+
+$ sudo mokutil --import MOK.der
+input password: 
+input password again: 
+Failed to enroll new keys
+What could be causing this?
+
+EDIT: Actually, I just noticed that I really can't do much with mokutil. For example:
+
+ sudo mokutil --reset
+input password: 
+input password again: 
+Failed to unset MokNew
+Failed to write MokAuth
+Failed to unset MokNew
+Failed to issue a reset request
