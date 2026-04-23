@@ -1,3 +1,9 @@
+If you fetching any issue then Firstly uninstall you VMware and re-install again.
+
+sudo vmware-installer --uninstall-product vmware-workstation
+
+
+
 
 sudo vmware-modconfig --console --install-all
 
