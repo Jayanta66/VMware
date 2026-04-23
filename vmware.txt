@@ -179,4 +179,11 @@ sudo modprobe -v vmmon
 sudo modprobe -v vmnet
 
 sudo vmware-networks --start
+
 You need to have the very latest version of workstation/player/viewer if you upgrade your kernel Workstation builds modules, and often the build process breaks if there are kernel changes. So if you are having problems first make sure you have the latest version of workstation https://www.vmware.com/products/workstation-pro/workstation-pro-evaluation.html
+
+
+
+sudo vmware-installer --uninstall-product vmware-workstation
+
+sudo dkms install --no-depmod -m vmware-workstation -v 17.6.4
