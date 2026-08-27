@@ -1,8 +1,34 @@
+https://healthcarepoint.joyjagatbondu.com
+https://jobportal.joyjagatbondu.com
+
+
 If you fetching any issue then Firstly uninstall you VMware and re-install again.
 
 sudo apt install -y build-essential linux-headers-$(uname -r) dkms
 
 sudo vmware-installer --uninstall-product vmware-workstation
+
+cd /home/l/Downloads/
+./VMware-Workstation-Full-17.6.4-24832109.x86_64.bundle
+
+cd /home/l/Downloads/vmware-host-modules-workstation-17.6.4/
+
+make
+
+make install
+
+sudo /usr/src/linux-headers-`uname -r`/scripts/sign-file sha256 ./MOK.priv ./MOK.der $(modinfo -n vmmon)
+
+sudo /usr/src/linux-headers-`uname -r`/scripts/sign-file sha256 ./MOK.priv ./MOK.der $(modinfo -n vmnet)
+
+sudo modprobe -v vmmon
+
+sudo modprobe -v vmnet
+
+sudo vmware-networks --start
+
+#################################################
+
 
 
 then 
